@@ -6,4 +6,7 @@
 // scr_welcome
 extern const unsigned char PROGMEM bitmap_dolphin[];
 
+// scr_bird
+extern const unsigned char PROGMEM bitmap_bird[];
+
 #endif //__SCREENS_BITMAP_H__

@@ -1,11 +1,12 @@
 #include "scr_bird.h"
+#include "screens_bitmap.h"
 
 #define BIRD_X              (20)
-#define BIRD_RADIUS         (4)
+#define BIRD_RADIUS         (6)
 #define GRAVITY             (1)
-#define FLAP_STRENGTH       (12)
+#define FLAP_STRENGTH       (6)
 #define PIPE_WIDTH          (12)
-#define PIPE_GAP_HEIGHT     (24)
+#define PIPE_GAP_HEIGHT     (32)
 #define PIPE_SPACING        (56)
 #define PIPE_MOVE_SPEED     (2)
 #define BIRD_UPDATE_INTERVAL (50)
@@ -22,10 +23,15 @@
 #define BIRD_GRAVITY_MAX    (8)
 #define BIRD_GRAVITY_STEP   (1)
 
-#define BIRD_SETTINGS_COUNT (3)
+#define BIRD_STRENGTH_MIN   (4)
+#define BIRD_STRENGTH_MAX   (14)
+#define BIRD_STRENGTH_STEP  (2)
+
+#define BIRD_SETTINGS_COUNT (4)
 #define BIRD_SETTING_SPEED  (0)
 #define BIRD_SETTING_GAP    (1)
 #define BIRD_SETTING_GRAVITY (2)
+#define BIRD_SETTING_STRENGTH (3)
 
 typedef struct {
     int16_t x;
@@ -50,11 +56,13 @@ static bool game_over;
 static int8_t pipe_speed = PIPE_MOVE_SPEED;
 static int16_t pipe_gap = PIPE_GAP_HEIGHT;
 static int8_t bird_gravity = GRAVITY;
+static int8_t bird_strength = FLAP_STRENGTH;
 static uint8_t bird_setting = BIRD_SETTING_SPEED;
 static const char* bird_setting_label[BIRD_SETTINGS_COUNT] = {
     "BG SPD",
     "GAP",
-    "DROP"
+    "DROP",
+    "STR"
 };
 
 static void view_scr_bird();
@@ -148,22 +156,27 @@ static void view_scr_bird() {
         view_render.setCursor(4, 20);
         view_render.print("DOWN = START");
 
-        view_render.setCursor(4, 34);
+        view_render.setCursor(4, 30);
         view_render.print(bird_setting_label[0]);
-        view_render.setCursor(64, 34);
+        view_render.setCursor(64, 30);
         view_render.print(pipe_speed);
 
-        view_render.setCursor(4, 44);
+        view_render.setCursor(4, 38);
         view_render.print(bird_setting_label[1]);
-        view_render.setCursor(64, 44);
+        view_render.setCursor(64, 38);
         view_render.print(pipe_gap);
 
-        view_render.setCursor(4, 54);
+        view_render.setCursor(4, 46);
         view_render.print(bird_setting_label[2]);
-        view_render.setCursor(64, 54);
+        view_render.setCursor(64, 46);
         view_render.print(bird_gravity);
 
-        view_render.setCursor(96, 34 + bird_setting * 10);
+        view_render.setCursor(4, 54);
+        view_render.print(bird_setting_label[3]);
+        view_render.setCursor(64, 54);
+        view_render.print(bird_strength);
+
+        view_render.setCursor(96, 30 + bird_setting * 8);
         view_render.print(">");
         return;
     }
@@ -175,7 +188,7 @@ static void view_scr_bird() {
         }
     }
 
-    view_render.fillCircle(bird.x, bird.y, BIRD_RADIUS, WHITE);
+    view_render.drawBitmap(bird.x - 8, bird.y - 5, bitmap_bird, 16, 10, WHITE);
 
     view_render.setTextSize(1);
     view_render.setTextColor(WHITE);
@@ -228,6 +241,13 @@ void scr_bird_handle(ak_msg_t* msg) {
                     bird_gravity = BIRD_GRAVITY_MIN;
                 }
                 break;
+
+            case BIRD_SETTING_STRENGTH:
+                bird_strength += BIRD_STRENGTH_STEP;
+                if (bird_strength > BIRD_STRENGTH_MAX) {
+                    bird_strength = BIRD_STRENGTH_MIN;
+                }
+                break;
             }
         }
     } break;
@@ -240,7 +260,7 @@ void scr_bird_handle(ak_msg_t* msg) {
         if (!game_started) {
             game_started = true;
         }
-        bird.velocity = -FLAP_STRENGTH;
+        bird.velocity = -bird_strength;
     } break;
 
     case AC_DISPLAY_BUTON_MODE_PRESSED: {
